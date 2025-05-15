@@ -41,7 +41,7 @@ export const JobsMapping = () => {
   return (
     <div>
       <MapContainer
-        center={{ lat: state.lat, lng: state.lng }}
+        center={{ lat: 41.65518, lng: -4.72345 }}
         zoom={15}
         style={{ height: "80vh", width: "100dvw" }}
       >
