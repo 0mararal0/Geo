@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { Link } from "react-router-dom";
 
 import L from "leaflet";
 
@@ -55,6 +56,7 @@ export const JobsMapping = () => {
 
   return (
     <div>
+      <Link to="/">Volver</Link>
       <MapContainer
         center={{ lat: 41.65518, lng: -4.72345 }}
         zoom={15}
