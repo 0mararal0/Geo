@@ -16,7 +16,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-const socket = io("http://localhost:5005");
+const socket = io("https://mapserver-dq4c.onrender.com");
 
 export const JobsMapping = () => {
   const [myLocation, setMyLocation] = useState({ lat: 42.004, lng: -4.52 });
