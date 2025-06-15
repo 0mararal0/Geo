@@ -57,6 +57,7 @@ export const JobsMapping = () => {
 
   useEffect(() => {
     socket.on("location", (data) => {
+      console.log("📍 Ubicación recibida:", data); // <-- Este log
       setOthers((prev) => {
         const updated = prev.filter((u) => u.id !== data.id);
         return [...updated, data];
@@ -95,6 +96,8 @@ export const JobsMapping = () => {
       </MapContainer>
 
       <p style={{ color: "white" }}>{mss}</p>
+
+      <pre style={{ color: "white" }}>{JSON.stringify(others, null, 2)}</pre>
     </div>
   );
 };
