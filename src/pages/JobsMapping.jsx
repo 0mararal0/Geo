@@ -16,7 +16,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-const socket = io("https://mapserver-dq4c.onrender.com");
+const socket = io(import.meta.env.VITE_SERVER_URL);
 
 export const JobsMapping = () => {
   const [myLocation, setMyLocation] = useState({ lat: 42.004, lng: -4.52 });
@@ -43,7 +43,7 @@ export const JobsMapping = () => {
       } else {
         setMss("Geolocalización no habilitada");
       }
-    }, 20000);
+    }, 10000);
 
     // Recibir ubicaciones de otros usuarios
     socket.on("location", (data) => {
