@@ -9,6 +9,7 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
+// Configurar íconos de Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -22,43 +23,55 @@ export const JobsMapping = () => {
   const [myLocation, setMyLocation] = useState({ lat: 42.004, lng: -4.52 });
   const [others, setOthers] = useState([]);
   const [mss, setMss] = useState("");
+  const [tracking, setTracking] = useState(false);
+  const [intervalId, setIntervalId] = useState(null);
 
-  useEffect(() => {
-    // Enviar ubicación cada 20 segundos
-    const interval = setInterval(() => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setMyLocation({ lat: latitude, lng: longitude });
-            socket.emit("location", { latitude, longitude });
-            setMss("Ubicación enviada");
-          },
-          (error) => {
-            console.error("Error al obtener la ubicación:", error);
-            setMss(`Error: ${error.message}`);
-          },
-          { enableHighAccuracy: true }
-        );
-      } else {
-        setMss("Geolocalización no habilitada");
-      }
+  // Función para iniciar el rastreo de ubicación
+  const startTracking = () => {
+    if (!navigator.geolocation) {
+      setMss("Geolocalización no habilitada");
+      return;
+    }
+
+    setTracking(true);
+    const id = setInterval(() => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setMyLocation({ lat: latitude, lng: longitude });
+          socket.emit("location", { latitude, longitude });
+          setMss("Ubicación enviada");
+        },
+        (error) => {
+          console.error("Error al obtener la ubicación:", error);
+          setMss(`Error: ${error.message}`);
+        },
+        { enableHighAccuracy: true }
+      );
     }, 10000);
 
-    // Recibir ubicaciones de otros usuarios
+    setIntervalId(id);
+  };
+
+  // Escuchar ubicaciones de otros usuarios
+  useEffect(() => {
     socket.on("location", (data) => {
-      setOthers((prev) => [...prev, data]); // puedes optimizar esto para evitar duplicados
+      setOthers((prev) => [...prev, data]);
     });
 
     return () => {
-      clearInterval(interval);
       socket.disconnect();
+      if (intervalId) clearInterval(intervalId);
     };
-  }, []);
+  }, [intervalId]);
 
   return (
     <div>
       <Link to="/">Volver</Link>
+      <button onClick={startTracking} disabled={tracking}>
+        {tracking ? "Ubicación compartiéndose..." : "Compartir mi ubicación"}
+      </button>
+
       <MapContainer
         center={{ lat: myLocation.lat, lng: myLocation.lng }}
         zoom={15}
@@ -76,6 +89,7 @@ export const JobsMapping = () => {
           <Marker key={index} position={[user.latitude, user.longitude]} />
         ))}
       </MapContainer>
+
       <p style={{ color: "white" }}>{mss}</p>
     </div>
   );
