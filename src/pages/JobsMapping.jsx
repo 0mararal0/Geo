@@ -54,9 +54,13 @@ export const JobsMapping = () => {
   };
 
   // Escuchar ubicaciones de otros usuarios
+
   useEffect(() => {
     socket.on("location", (data) => {
-      setOthers((prev) => [...prev, data]);
+      setOthers((prev) => {
+        const updated = prev.filter((u) => u.id !== data.id);
+        return [...updated, data];
+      });
     });
 
     return () => {
