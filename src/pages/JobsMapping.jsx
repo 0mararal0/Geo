@@ -17,6 +17,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Conexión con el servidor
 const socket = io(import.meta.env.VITE_SERVER_URL);
 
 export const JobsMapping = () => {
@@ -24,9 +25,8 @@ export const JobsMapping = () => {
   const [others, setOthers] = useState([]);
   const [mss, setMss] = useState("");
   const [tracking, setTracking] = useState(false);
-  const [intervalId, setIntervalId] = useState(null);
+  const [watchId, setWatchId] = useState(null);
 
-  // Función para iniciar el rastreo de ubicación
   const startTracking = () => {
     if (!navigator.geolocation) {
       setMss("Geolocalización no habilitada");
@@ -34,41 +34,42 @@ export const JobsMapping = () => {
     }
 
     setTracking(true);
-    const id = setInterval(() => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setMyLocation({ lat: latitude, lng: longitude });
-          socket.emit("location", { latitude, longitude });
-          setMss("Ubicación enviada");
-        },
-        (error) => {
-          console.error("Error al obtener la ubicación:", error);
-          setMss(`Error: ${error.message}`);
-        },
-        { enableHighAccuracy: true }
-      );
-    }, 10000);
+    const id = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setMyLocation({ lat: latitude, lng: longitude });
+        socket.emit("location", { latitude, longitude });
+        setMss("Ubicación enviada: " + latitude + " " + longitude);
+        console.log("📍 Mi ubicación enviada:", { latitude, longitude });
+      },
+      (error) => {
+        console.error("Error al obtener la ubicación:", error);
+        setMss(`Error: ${error.message}`);
+      },
+      { enableHighAccuracy: true }
+    );
 
-    setIntervalId(id);
+    setWatchId(id);
   };
-
-  // Escuchar ubicaciones de otros usuarios
 
   useEffect(() => {
     socket.on("location", (data) => {
-      console.log("📍 Ubicación recibida:", data); // <-- Este log
+      console.log("📍 Ubicación recibida:", data);
       setOthers((prev) => {
         const updated = prev.filter((u) => u.id !== data.id);
         return [...updated, data];
       });
     });
+  }, []);
 
+  /* useEffect(() => {
     return () => {
       socket.disconnect();
-      if (intervalId) clearInterval(intervalId);
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
     };
-  }, [intervalId]);
+  }, [watchId]); */
 
   return (
     <div>
@@ -86,17 +87,13 @@ export const JobsMapping = () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
         />
-        {/* Tu ubicación */}
         <Marker position={[myLocation.lat, myLocation.lng]} />
-
-        {/* Otros usuarios */}
         {others.map((user, index) => (
           <Marker key={index} position={[user.latitude, user.longitude]} />
         ))}
       </MapContainer>
 
       <p style={{ color: "white" }}>{mss}</p>
-
       <pre style={{ color: "white" }}>{JSON.stringify(others, null, 2)}</pre>
     </div>
   );
